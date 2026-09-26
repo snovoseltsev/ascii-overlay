@@ -10,7 +10,9 @@
 - `ascii-overlay.js` — весь эффект, один файл
 - `mask.mp4` — клип-источник, десктоп (1080p, ~13 МБ)
 - `mask-m.mp4` — клип-источник, мобилка ≤768px (640×360, ~1.3 МБ)
-- `index.html` — демо
+- `background.mp4` — видимая дюна для фона демо (1080p, ~2.1 МБ), та же съёмка, что и `mask.mp4`
+- `dune.jpg` — фото-фолбэк дюны до первого кадра клипа (~0.5 МБ)
+- `index.html` — демо: эффект поверх фона-дюны
 
 ## Подключение
 
@@ -23,6 +25,38 @@
 
 Всё. Скрипт сам создаёт фиксированный слой поверх всего (`pointer-events: none` —
 клики и скролл проходят насквозь) и сам находит видео рядом с собой.
+
+## Фон-дюна (демо)
+
+На сайте Axion дюна под кодом — не часть эффекта, а отдельный слой страницы
+(`BackdropStage`): фиксированный контейнер под оверлеем, в нём фото-фолбэк и
+поверх него зацикленный клип. `index.html` повторяет этот слой один в один,
+сам `ascii-overlay.js` остаётся прозрачным и ничего о фоне не знает.
+
+```html
+<style>
+  body { background: #b7b7b7; }               /* серый до первого кадра, как на сайте */
+  .backdrop { position: fixed; inset: 0; height: 100lvh; z-index: 0;
+              background: #b7b7b7; overflow: hidden; pointer-events: none; }
+  .backdrop__fallback, .backdrop__media { position: absolute; inset: 0;
+              width: 100%; height: 100%; object-fit: cover; }
+  .backdrop__media { object-position: 69% 50%; } /* гребень клипа = гребень фото на телефоне */
+  @media (prefers-reduced-motion: reduce) { .backdrop__media { display: none; } }
+</style>
+<div class="backdrop" aria-hidden="true">
+  <img class="backdrop__fallback" src="/ascii-overlay/dune.jpg" alt="" width="1024" height="1536" />
+  <video class="backdrop__media" src="/ascii-overlay/background.mp4" autoplay muted loop playsinline preload="auto"></video>
+</div>
+```
+
+- `background.mp4` и `mask.mp4` — одна и та же съёмка (1920×1080, 20 с, обе
+  зациклены), поэтому острова глифов ложатся на гребни дюны. Жёсткой
+  синхронизации по времени нет, как и на сайте: разбег в доли секунды на
+  медленном клипе не читается.
+- Эффект живёт на `zIndex: 9999`, фон — на `z-index: 0`; между ними можно
+  класть любой контент страницы.
+- `prefers-reduced-motion: reduce` — клип скрыт, остаётся фото; эффект в этом
+  режиме и так не монтируется.
 
 ## Настройки (необязательно)
 
